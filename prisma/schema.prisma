@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SelectedCard {
+  id   String @id @default(uuid())
+  name String
+}
+
+model SeasonDetails {
+  id     String @id @default(uuid())
+  season String
+  week   String
+}
+
+model Guess {
+  id        String  @id @default(uuid())
+  season    Int
+  week      Int
+  autoGuess Boolean
+  username  String
+  round     Int
+  value     String
+  suit      String
+}
+
+model GameDetails {
+  id                String   @id @default(uuid())
+  season            Int      @default(1)
+  week              Int      @default(1)
+  guessLockTime     DateTime
+  isCheckingGuesses Boolean  @default(false)
+  currentRound      Int?
+}
+
+model Countdown {
+  id           String   @id @default(uuid())
+  nextGameDate DateTime
+}
+
+model CorrectGuess {
+  id       String @id @default(uuid())
+  season   String
+  week     String
+  round    String
+  points   Int
+  card     String
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id])
+}
+
+model Player {
+  id             String         @id @default(uuid())
+  username       String
+  password       String
+  email          String
+  correctGuesses CorrectGuess[]
+}

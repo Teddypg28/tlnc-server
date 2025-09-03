@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "GameDetails" ADD COLUMN     "season" INTEGER NOT NULL DEFAULT 1,
+ADD COLUMN     "week" INTEGER NOT NULL DEFAULT 1;
