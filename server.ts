@@ -4,6 +4,7 @@ import bycrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import badwords from 'badwords/array'
 import dotenv from 'dotenv'
+
 import { Countdown, GameDetails, PrismaClient } from '@prisma/client'
 
 const app = express()
@@ -64,9 +65,24 @@ app.listen(PORT, () => {
     console.log(`Server listening on PORT ${PORT}`)
 })
 
+app.post('/player-guesses', async (req, res) => {
+    try {      
+        const { season, round } = req.body
+    
+        const playerGuesses = await db.guess.findMany({where: {round, AND: {season}}})
+    
+        res.status(200).json(playerGuesses)
+    } catch (error) {
+        res.status(400).json({status: error})
+    }
+})
+
 app.post('/submit-guess', async (req, res) => {
     try {
-        const { value, suit, autoGuess, round, username } = req.body
+        const { code, autoGuess, round, username } = req.body
+
+        const player = await db.player.findFirst({where: {username}})
+        if (!player) return res.status(400).json({status: "No player with that username exists"})
     
         const gameDetails = await db.gameDetails.findFirst() as GameDetails
     
@@ -78,15 +94,15 @@ app.post('/submit-guess', async (req, res) => {
         }}}})
 
         if (storedGuess) {
-            await db.guess.update({where: {id: storedGuess.id}, data: {autoGuess, suit, value}})
+            await db.guess.update({where: {id: storedGuess.id}, data: {autoGuess, code}})
         } else {
             await db.guess.create({
                 data: {
                     round, 
                     autoGuess,
                     username,
-                    suit,
-                    value,
+                    code,
+                    playerId: player.id,
                     season: gameDetails.season,
                     week: gameDetails.week
                 }

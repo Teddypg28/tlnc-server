@@ -8,8 +8,12 @@ datasource db {
 }
 
 model SelectedCard {
-  id   String @id @default(uuid())
-  name String
+  id            String      @id @default(uuid())
+  code          String
+  image         String
+  round         Int
+  gameDetailsId String
+  gameDetails   GameDetails @relation(fields: [gameDetailsId], references: [id])
 }
 
 model SeasonDetails {
@@ -23,19 +27,20 @@ model Guess {
   season    Int
   week      Int
   autoGuess Boolean
+  playerId  String
   username  String
   round     Int
-  value     String
-  suit      String
+  code      String
 }
 
 model GameDetails {
-  id                String   @id @default(uuid())
-  season            Int      @default(1)
-  week              Int      @default(1)
+  id                String         @id @default(uuid())
+  season            Int            @default(1)
+  week              Int            @default(1)
   guessLockTime     DateTime
-  isCheckingGuesses Boolean  @default(false)
+  isCheckingGuesses Boolean        @default(false)
   currentRound      Int?
+  selectedCards     SelectedCard[]
 }
 
 model Countdown {
@@ -45,11 +50,11 @@ model Countdown {
 
 model CorrectGuess {
   id       String @id @default(uuid())
-  season   String
-  week     String
-  round    String
+  season   Int
+  week     Int
+  round    Int
   points   Int
-  card     String
+  code     String
   playerId String
   player   Player @relation(fields: [playerId], references: [id])
 }

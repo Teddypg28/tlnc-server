@@ -9,12 +9,14 @@ const db = new PrismaClient()
 io.on('connection', async () => {
     const currentGameData = await db.gameDetails.findFirst() as GameDetails
 
-    const currentRound = currentGameData.currentRound || 1
+    let currentRound = currentGameData.currentRound || 1
     const currentExpirationTime = currentGameData.guessLockTime
     
     io.emit('guessLockTime', currentExpirationTime)
     io.emit('currentRound', currentRound)
 })
+
+export { io }
 
 
 // casino opens
