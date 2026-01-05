@@ -20,9 +20,8 @@ const allowGuesses = async () => {
     await wait(difference)
 }
 
-
 CronJob.from({
-    cronTime: '27 16 * * *',
+    cronTime: '36 14 * * *',
     onTick: async function () {
 
         const gameDetails = await db.gameDetails.findFirst() as GameDetails
@@ -38,17 +37,18 @@ CronJob.from({
             await db.gameDetails.update({where: {id: gameDetails.id}, data: {currentRound: round}})
             io.emit('currentRound', round)
 
-
             // wait for players to guess
             await allowGuesses();
             
             // select random card from deck
             const selectedCardRes = await drawNewCard(deckId)
             const cardData = await selectedCardRes.json() as {cards: [{code: string, images: {png: string}}]}
+
             const selectedCardData = {
                 code: cardData.cards[0].code,
                 image: cardData.cards[0].images.png
             }
+
             await db.selectedCard.create({data: {code: selectedCardData.code, round, gameDetailsId: gameDetails.id, image: selectedCardData.image}})
             
             // wait 3 seconds before card is displayed
@@ -81,6 +81,11 @@ CronJob.from({
 
             // wait 5 seconds to advance the round
             await wait(5000)
+
+            // end of game; send players back to waiting room
+            if (round === 5) {
+                io.emit('gameOver')
+            }
         }
 
     },
