@@ -77,6 +77,18 @@ app.post('/player-guesses', async (req, res) => {
     }
 })
 
+app.post('/guess-check', async (req, res) => {
+    try {
+        const { season, round, username } = req.body
+        const guess = await db.guess.findFirst({where: {username, round, season}})
+        if (!guess) return res.status(200).json({guess: null})
+
+        return res.status(200).json({guess: guess.code})
+    } catch (error) {
+        res.status(400).json({status: error})
+    }
+})
+
 app.post('/submit-guess', async (req, res) => {
     try {
         const { code, autoGuess, round, username } = req.body
@@ -166,11 +178,4 @@ app.post('/login', async (req, res) => {
 
     return res.status(200).send({ token })
     
-})
-
-app.post('/forgot-password', async (req, res) => {
-
-    const email = req.body.email
-    const result = await db.player.findFirst({where: {email: {equals: email}}})
-
 })

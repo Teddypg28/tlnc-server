@@ -2,7 +2,7 @@ import { GameDetails, PrismaClient } from '@prisma/client';
 import { CronJob } from 'cron'
 const db = new PrismaClient()
 
-import { drawNewCard, shuffleNewDeck } from './deckOfCardFunctions';
+import { drawNewCard, getAlreadySelectedCards, shuffleNewDeck } from './deckOfCardFunctions';
 import { io } from './socket';
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
@@ -21,10 +21,12 @@ const allowGuesses = async () => {
 }
 
 CronJob.from({
-    cronTime: '36 14 * * *',
+    cronTime: '27 01 * * *',
     onTick: async function () {
 
         const gameDetails = await db.gameDetails.findFirst() as GameDetails
+
+        io.emit('currentSeason', gameDetails.season)
 
         const response = await shuffleNewDeck()
         const deckData = await response.json() as {deck_id: string}
@@ -36,6 +38,7 @@ CronJob.from({
             round++;
             await db.gameDetails.update({where: {id: gameDetails.id}, data: {currentRound: round}})
             io.emit('currentRound', round)
+            io.emit('cardHistory', await getAlreadySelectedCards(gameDetails.season))
 
             // wait for players to guess
             await allowGuesses();
@@ -82,12 +85,18 @@ CronJob.from({
             // wait 5 seconds to advance the round
             await wait(5000)
 
-            // end of game; send players back to waiting room
+            // end of game; send players back to waiting room, update next game date 
             if (round === 5) {
+                const now = new Date()
+                const nextSunday = new Date(now)
+                nextSunday.setDate(now.getDate() + 7)
+                nextSunday.setUTCHours(3, 0, 0, 0)
+
+                await db.countdown.update({where: {id: "27b9ee13-fe38-4771-803e-02d4750ba2fc"}, data: {nextGameDate: nextSunday}})
+
                 io.emit('gameOver')
             }
         }
-
     },
     start: true,
     timeZone: 'America/Chicago'

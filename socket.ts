@@ -1,6 +1,7 @@
 
 import { Server } from "socket.io"
 import { GameDetails, PrismaClient } from '@prisma/client';
+import { getAlreadySelectedCards } from "./deckOfCardFunctions";
 
 const io = new Server(8000, {cors: {origin: 'http://192.168.4.39:8081'}})
 
@@ -11,9 +12,12 @@ io.on('connection', async () => {
 
     let currentRound = currentGameData.currentRound || 1
     const currentExpirationTime = currentGameData.guessLockTime
+
+    const cardCodes = await getAlreadySelectedCards(currentGameData.season)
     
     io.emit('guessLockTime', currentExpirationTime)
     io.emit('currentRound', currentRound)
+    io.emit('cardHistory', cardCodes)
 })
 
 export { io }
